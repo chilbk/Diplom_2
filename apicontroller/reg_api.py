@@ -1,6 +1,7 @@
 import requests
 from Diplom_2.auth_helper import AuthHelper
 from Diplom_2.api_endpoints import REGISTER_ENDPOINT
+from Diplom_2.data import existing_user
 
 
 class UserApi:
@@ -15,9 +16,9 @@ class UserApi:
         name = self.auth.generate_name()
 
         payload = {
-            'email': email,
-            'password': password,
-            'name': name
+            "email": email,
+            "password": password,
+            "name": name
         }
 
         response = requests.post(REGISTER_ENDPOINT, json=payload)
@@ -25,13 +26,7 @@ class UserApi:
 
 # Метод create_existing_user - пытается создать пользователя с уже существующими данными
     def create_existing_user(self):
-        payload = {
-            "email": "pythonvda@mail.ru",
-            "password": "qwerty123",
-            "name": "Dmitry"
-        }
-
-        response = requests.post(REGISTER_ENDPOINT, json=payload)
+        response = requests.post(REGISTER_ENDPOINT, json=existing_user)
         return response
 
 # Метод create_user_with_missing_fields - пытается создать пользователя без одного из обязательных полей
@@ -41,9 +36,9 @@ class UserApi:
         name = self.auth.generate_name()
 
         test_cases = [
-            {"password": password, "name": name},              # Пользователь без email
-            {"email": email, "name": name},                    # Пользователь без password
-            {"email": email, "password": password}            # Пользователь без name
+            {"password": password, "name": name},              # Без email
+            {"email": email, "name": name},                    # Без password
+            {"email": email, "password": password}             # Без name
         ]
 
         responses = []

@@ -2,7 +2,7 @@ import random as rnd
 
 class AuthHelper:
     def generate_login(self) -> str:
-        return f'vda_diplom_{rnd.randint(100, 999)}@example.com'
+        return f'vda_diplom_19{rnd.randint(100, 999)}@example.com'
 
     def generate_password(self) -> str:
         return 'diplom_' + str(rnd.randint(100000, 999999))

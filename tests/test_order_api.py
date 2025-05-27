@@ -1,56 +1,51 @@
 import pytest
 import allure
-from Diplom_2.apicontroller.order_api import OrderApi
+from Diplom_2.apicontroller.reg_api import UserApi
+from Diplom_2.data import USER_EXISTS_MESSAGE, MISSING_FIELDS_MESSAGE
 
-valid_ingredients = [
-    "61c0c5a71d1f82001bdaaa6d",
-    "61c0c5a71d1f82001bdaaa6c"
-]
+@allure.suite("Тесты регистрации пользователей")
+class TestRegApi:
 
-@allure.title("Создание заказа с авторизацией и валидными ингредиентами")
-def test_create_order_with_auth(user_token):
-    api = OrderApi()
+    @allure.title('Регистрация нового уникального пользователя')
+    def test_register_unique_user(self):
+        api = UserApi()
 
-    with allure.step("Отправка POST запроса с токеном и валидными ингредиентами"):
-        response = api.get_orders(token=user_token)
+        with allure.step('Создание уникального пользователя'):
+            response, payload = api.create_unique_user()
 
-    with allure.step("Проверка успешного ответа"):
-        assert response.status_code == 200, f"Ожидали 200, получили {response.status_code}. Ответ: {response.text}"
-        body = response.json()
-        assert 'orders' in body, f"Нет заказов в ответе: {body}"
+        with allure.step('Проверка успешной регистрации'):
+            assert response.status_code == 200, f'Ожидали 200, получили {response.status_code}. Ответ: {response.text}'
+            body = response.json()
+            assert body['success'] is True, f'Ожидали success=True. Ответ: {body}'
+            assert 'accessToken' in body, f'accessToken отсутствует в ответе: {body}'
+            assert body['user']['email'] == payload['email'], f'Email в ответе не совпадает с отправленным: {body}'
 
+    @allure.title('Попытка зарегистрировать уже существующего пользователя')
+    def test_register_existing_user(self):
+        api = UserApi()
 
-@allure.title("Создание заказа без авторизации")
-def test_create_order_without_auth():
-    api = OrderApi()
+        with allure.step('Попытка регистрации с уже существующими данными'):
+            response = api.create_existing_user()
 
-    with allure.step("Отправка POST запроса без токена и с валидными ингредиентами"):
-        response = api.get_orders()
+        with allure.step('Проверка сообщения об ошибке'):
+            assert response.status_code == 403, f'Ожидали 403, получили {response.status_code}. Ответ: {response.text}'
+            body = response.json()
+            assert body['message'] == USER_EXISTS_MESSAGE, f'Неверное сообщение: {body}'
 
-    with allure.step("Проверка ошибки доступа"):
-        assert response.status_code == 401, f"Ожидали 401, получили {response.status_code}. Ответ: {response.text}"
-        body = response.json()
-        assert body['message'] == "You should be authorised", f"Неверное сообщение: {body}"
+    @pytest.mark.parametrize('case_index, field_name', [
+        (0, 'email'),
+        (1, 'password'),
+        (2, 'name')
+    ])
+    @allure.title('Попытка регистрации без обязательного поля: {field_name}')
+    def test_register_missing_fields(self, case_index, field_name):
+        api = UserApi()
 
+        with allure.step('Формирование и отправка запроса без одного из обязательных полей'):
+            responses = api.create_user_with_missing_fields()
+            data, response = responses[case_index]
 
-@allure.title("Создание заказа без ингредиентов")
-def test_create_order_without_ingredients(user_token):
-    api = OrderApi()
-
-    with allure.step("Отправка POST запроса с токеном, но без ингредиентов"):
-        response = api.get_orders(token=user_token)
-
-    with allure.step("Проверка успешного ответа (пустой список возможен)"):
-        assert response.status_code == 200, f"Ожидали 200, получили {response.status_code}. Ответ: {response.text}"
-
-
-@allure.title("Создание заказа с невалидными ингредиентами")
-def test_create_order_with_invalid_ingredients(user_token):
-    api = OrderApi()
-
-    with allure.step("Отправка POST запроса с невалидными ингредиентами (эмуляция через GET)"):
-        response = api.get_orders(token=user_token)
-
-    with allure.step("Проверка успешного ответа"):
-        assert response.status_code == 200, f"Ожидали 200, получили {response.status_code}. Ответ: {response.text}"
-        assert 'orders' in response.json(), "Нет ключа 'orders' в ответе"
+        with allure.step('Проверка сообщения об ошибке'):
+            assert response.status_code == 403, f'Ожидали 403, получили {response.status_code}. Ответ: {response.text}'
+            body = response.json()
+            assert body['message'] == MISSING_FIELDS_MESSAGE, f'Неверное сообщение об ошибке: {body}'
