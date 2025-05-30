@@ -2,6 +2,7 @@ import pytest
 import allure
 from Diplom_2.apicontroller.login_api import LoginApi
 from Diplom_2.data import INVALID_CREDENTIALS_MESSAGE
+from Diplom_2.data import INVALID_LOGIN_CREDENTIALS
 
 @allure.suite("Тесты на авторизацию")
 class TestLoginApi:
@@ -20,12 +21,7 @@ class TestLoginApi:
             assert 'accessToken' in body, "accessToken отсутствует в ответе"
             assert body['user']['email'] == user_data['email'], f"Email не совпадает: {body}"
 
-    @pytest.mark.parametrize("email, password", [
-        ("invalid@example.com", "wrongpass"),
-        ("", "validpass"),
-        ("valid@example.com", ""),
-        ("", "")
-    ])
+    @pytest.mark.parametrize("email, password", INVALID_LOGIN_CREDENTIALS)
     @allure.title("Попытка авторизации с невалидными данными: email={email}, password={password}")
     def test_login_with_invalid_credentials(self, email, password):
         api = LoginApi()
