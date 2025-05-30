@@ -1,0 +1,6 @@
+pytest-cache*/
+*~
+__pycache__/
+apicontroller/__pycache__
+tests/__pycache__
+allure-results/
